@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Scale, Smile, FileText, Plus } from 'lucide-react';
+import { Scale, Smile, FileText, Plus, Flame, User } from 'lucide-react';
 import MetricCard from '../components/MetricCard';
 import TimelineItem from '../components/TimelineItem';
 import EmptyState from '../components/EmptyState';
@@ -45,9 +45,53 @@ export default function TodayPage() {
     ...getTodayEntries(nutritionEntries).map((e) => ({ ...e, type: 'nutrition' })),
   ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
+  // Calculate streak (consecutive days with at least one entry)
+  const calculateStreak = () => {
+    const allEntries = [...weightEntries, ...moodEntries, ...nutritionEntries];
+    if (allEntries.length === 0) return 0;
+
+    const sortedDates = [...new Set(
+      allEntries.map(e => new Date(e.timestamp).toDateString())
+    )].sort((a, b) => new Date(b) - new Date(a));
+
+    let streak = 0;
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+    // Check if there's an entry today or yesterday to continue streak
+    if (sortedDates[0] !== today && sortedDates[0] !== yesterday) return 0;
+
+    for (let i = 0; i < sortedDates.length; i++) {
+      const expectedDate = new Date(Date.now() - i * 86400000).toDateString();
+      if (sortedDates[i] === expectedDate) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  };
+
+  const streak = calculateStreak();
+
   return (
     <div className="page page-today">
-      <h1 className="page-title">Today</h1>
+      {/* Hero Greeting Section */}
+      <div className="hero-section">
+        <div className="hero-content">
+          <div className="hero-header">
+            <div className="hero-avatar">
+              <User size={32} />
+            </div>
+            <div className="hero-streak">
+              <Flame size={16} />
+              <span>{streak}</span>
+            </div>
+          </div>
+          <h1 className="hero-title">Hey, There!</h1>
+          <p className="hero-subtitle">Keep going strong!</p>
+        </div>
+      </div>
 
       {/* Dashboard Cards */}
       <div className="dashboard-grid">
