@@ -1,0 +1,46 @@
+.App {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.App h1 {
+  color: #646cff;
+  margin-bottom: 1rem;
+}
+
+.App p {
+  margin: 1.5rem 0;
+  font-size: 1.1em;
+  line-height: 1.6;
+}
+
+.App button {
+  margin-top: 2rem;
+  padding: 0.8em 1.6em;
+  font-size: 1.1em;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.App button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.App button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: light) {
+  .App h1 {
+    color: #535bf2;
+  }
+}
