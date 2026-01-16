@@ -5,14 +5,14 @@ function App() {
     const [count, setCount] = useState(0)
 
   return (
-        <div className="App">
-              <h1>Health Tracker</h1>h1>
-              <p>Welcome to your personal health, fitness, and nutrition tracker</p>p>
-              <button onClick={() => setCount(count + 1)}>
-                      Count: {count}
-              </button>button>
-        </div>div>
-      )
+    <div className="App">
+      <h1>Health Tracker</h1>
+      <p>Welcome to your personal health, fitness, and nutrition tracker</p>
+      <button onClick={() => setCount(count + 1)}>
+        Count: {count}
+      </button>
+    </div>
+  )
 }
 
-export default App</div>
+export default App
