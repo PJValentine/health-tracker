@@ -1980,6 +1980,62 @@
   font-weight: 500;
 }
 
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: rgba(74, 155, 127, 0.1);
+  border: 1px solid var(--color-success);
+  border-radius: var(--border-radius-sm);
+  color: var(--color-success);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-primary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  margin-left: -0.5rem;
+}
+
+.back-button:hover {
+  color: var(--color-primary-dark);
+}
+
+.form-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.forgot-password-link {
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+}
+
+.forgot-password-link:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
 .login-footer {
   margin-top: 2rem;
   text-align: center;
