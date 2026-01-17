@@ -47,9 +47,9 @@ export default function WeightChart({ entries }) {
 
   const { entries: data, min, max, range } = chartData;
 
-  const width = 100; // percentage
-  const height = 200; // pixels
-  const padding = 20;
+  const width = 800; // pixels for viewBox
+  const height = 300; // pixels for viewBox
+  const padding = 40;
 
   // Calculate points for SVG polyline
   const points = data
@@ -64,7 +64,7 @@ export default function WeightChart({ entries }) {
     <div className="weight-chart">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid meet"
         className="chart-svg"
       >
         {/* Grid lines */}
@@ -73,16 +73,16 @@ export default function WeightChart({ entries }) {
           y1={height - padding}
           x2={width - padding}
           y2={height - padding}
-          stroke="#e5e7eb"
-          strokeWidth="0.5"
+          stroke="#E8D4BC"
+          strokeWidth="2"
         />
 
         {/* Weight line */}
         <polyline
           points={points}
           fill="none"
-          stroke="#6366f1"
-          strokeWidth="2"
+          stroke="var(--color-primary)"
+          strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
@@ -97,8 +97,8 @@ export default function WeightChart({ entries }) {
               key={entry.id}
               cx={x}
               cy={y}
-              r="1.5"
-              fill="#6366f1"
+              r="6"
+              fill="var(--color-primary)"
             />
           );
         })}
