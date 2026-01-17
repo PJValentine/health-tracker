@@ -23,8 +23,10 @@ export default function LoginPage() {
     try {
       if (isLogin) {
         // Login
+        console.log('Attempting login for:', email);
         const { error } = await signIn(email, password);
         if (error) throw error;
+        console.log('Login successful, navigating to home');
         navigate('/');
       } else {
         // Sign up
@@ -34,16 +36,20 @@ export default function LoginPage() {
         if (password.length < 6) {
           throw new Error('Password must be at least 6 characters');
         }
-        const { error } = await signUp(email, password, { name });
+        console.log('Attempting signup for:', email, 'with name:', name);
+        const { data, error } = await signUp(email, password, { name });
         if (error) throw error;
+
+        console.log('Signup response:', data);
 
         // Show success message
         setError('');
-        alert('Account created! Please check your email to verify your account.');
+        alert('Account created! Please check your email to verify your account, or you can sign in immediately if email verification is disabled.');
         setIsLogin(true);
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Auth error:', err);
+      setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
     }

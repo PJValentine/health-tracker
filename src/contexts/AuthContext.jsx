@@ -41,8 +41,10 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password, metadata = {}) => {
     if (!supabase) {
+      console.error('SignUp failed: Supabase client not initialized');
       return { data: null, error: new Error('Supabase client not initialized') };
     }
+    console.log('SignUp: Calling Supabase auth.signUp');
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -50,6 +52,11 @@ export const AuthProvider = ({ children }) => {
         data: metadata,
       },
     });
+    if (error) {
+      console.error('SignUp error from Supabase:', error);
+    } else {
+      console.log('SignUp success:', data);
+    }
     return { data, error };
   };
 
