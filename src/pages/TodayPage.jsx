@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Scale, Smile, FileText, Plus, Flame, User } from 'lucide-react';
 import MetricCard from '../components/MetricCard';
 import TimelineItem from '../components/TimelineItem';
@@ -74,23 +74,27 @@ export default function TodayPage() {
 
   const streak = calculateStreak();
 
-  // Hero image styles
-  const heroStyle = {};
+  // Apply hero image via CSS variables
   const heroClassName = settings?.heroImage?.enabled && settings?.heroImage?.url
     ? 'hero-section with-image'
     : 'hero-section';
 
-  if (settings?.heroImage?.enabled && settings?.heroImage?.url) {
-    document.documentElement.style.setProperty('--hero-bg-size', settings.heroImage.fit);
-    document.documentElement.style.setProperty('--hero-bg-position', settings.heroImage.position);
-    document.documentElement.style.setProperty('--hero-bg-opacity', settings.heroImage.opacity);
-    heroStyle.backgroundImage = `url(${settings.heroImage.url})`;
-  }
+  useEffect(() => {
+    if (settings?.heroImage?.enabled && settings?.heroImage?.url) {
+      document.documentElement.style.setProperty('--hero-bg-image', `url(${settings.heroImage.url})`);
+      document.documentElement.style.setProperty('--hero-bg-size', settings.heroImage.fit);
+      document.documentElement.style.setProperty('--hero-bg-position', settings.heroImage.position);
+      document.documentElement.style.setProperty('--hero-bg-opacity', settings.heroImage.opacity);
+    } else {
+      document.documentElement.style.removeProperty('--hero-bg-image');
+      document.documentElement.style.removeProperty('--hero-bg-opacity');
+    }
+  }, [settings?.heroImage]);
 
   return (
     <div className="page page-today">
       {/* Hero Greeting Section */}
-      <div className={heroClassName} style={heroStyle}>
+      <div className={heroClassName}>
         <div className="hero-content">
           <div className="hero-header">
             <div className="hero-avatar">

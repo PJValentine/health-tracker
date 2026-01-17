@@ -28,22 +28,21 @@ export default function AppShell() {
     }
   }, [settings]);
 
-  // Get background image style
-  const appShellStyle = {};
-  if (settings?.backgroundImage?.enabled && settings?.backgroundImage?.url) {
-    appShellStyle.backgroundImage = `url(${settings.backgroundImage.url})`;
-    appShellStyle.backgroundSize = settings.backgroundImage.fit;
-    appShellStyle.backgroundPosition = settings.backgroundImage.position;
-    appShellStyle.backgroundRepeat = 'no-repeat';
-    appShellStyle.backgroundAttachment = 'fixed';
-    appShellStyle.setProperty = (key, value) => {
-      document.documentElement.style.setProperty(key, value);
-    };
-    document.documentElement.style.setProperty('--bg-image-opacity', settings.backgroundImage.opacity);
-  }
+  // Apply background image via CSS variables
+  useEffect(() => {
+    if (settings?.backgroundImage?.enabled && settings?.backgroundImage?.url) {
+      document.documentElement.style.setProperty('--app-bg-image', `url(${settings.backgroundImage.url})`);
+      document.documentElement.style.setProperty('--app-bg-size', settings.backgroundImage.fit);
+      document.documentElement.style.setProperty('--app-bg-position', settings.backgroundImage.position);
+      document.documentElement.style.setProperty('--app-bg-opacity', settings.backgroundImage.opacity);
+    } else {
+      document.documentElement.style.removeProperty('--app-bg-image');
+      document.documentElement.style.removeProperty('--app-bg-opacity');
+    }
+  }, [settings?.backgroundImage]);
 
   return (
-    <div className="app-shell" style={appShellStyle}>
+    <div className="app-shell">
       {/* Top Bar */}
       <header className="top-bar">
         <div className="top-bar-content">

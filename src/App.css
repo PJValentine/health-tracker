@@ -1772,8 +1772,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: inherit;
-  opacity: var(--bg-image-opacity, 0);
+  background-image: var(--app-bg-image);
+  background-size: var(--app-bg-size, cover);
+  background-position: var(--app-bg-position, center);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  opacity: var(--app-bg-opacity, 0);
   z-index: -1;
   pointer-events: none;
 }
@@ -1790,6 +1794,7 @@
   left: 0;
   right: 0;
   bottom: 0;
+  background-image: var(--hero-bg-image);
   background-size: var(--hero-bg-size, cover);
   background-position: var(--hero-bg-position, center);
   background-repeat: no-repeat;
@@ -1815,6 +1820,7 @@
   left: 0;
   right: 0;
   bottom: 0;
+  background-image: var(--card-bg-image);
   background-size: var(--card-bg-size, cover);
   background-position: var(--card-bg-position, center);
   background-repeat: no-repeat;
