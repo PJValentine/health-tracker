@@ -340,10 +340,11 @@ export default function SettingsPage() {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="https://example.com/image.jpg"
+                  placeholder="https://images.unsplash.com/photo-123/image.jpg"
                   value={bgImageInputs.url}
                   onChange={(e) => handleBackgroundImageChange('url', e.target.value)}
                 />
+                <p className="form-helper-text">Use direct image URLs (.jpg, .png, .webp). For Unsplash: right-click image → "Copy Image Address"</p>
               </div>
 
               <div className="settings-row">
@@ -416,10 +417,11 @@ export default function SettingsPage() {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="https://example.com/image.jpg"
+                  placeholder="https://images.unsplash.com/photo-123/image.jpg"
                   value={heroImageInputs.url}
                   onChange={(e) => handleHeroImageChange('url', e.target.value)}
                 />
+                <p className="form-helper-text">Use direct image URLs (.jpg, .png, .webp). For Unsplash: right-click image → "Copy Image Address"</p>
               </div>
 
               <div className="settings-row">
@@ -492,10 +494,11 @@ export default function SettingsPage() {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="https://example.com/image.jpg"
+                  placeholder="https://images.unsplash.com/photo-123/image.jpg"
                   value={cardImageInputs.url}
                   onChange={(e) => handleCardImageChange('url', e.target.value)}
                 />
+                <p className="form-helper-text">Use direct image URLs (.jpg, .png, .webp). For Unsplash: right-click image → "Copy Image Address"</p>
               </div>
 
               <div className="settings-row">
