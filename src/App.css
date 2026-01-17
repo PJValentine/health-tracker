@@ -864,11 +864,13 @@
 .weight-chart,
 .mood-chart {
   width: 100%;
+  max-height: 350px;
 }
 
 .chart-svg {
   width: 100%;
   height: auto;
+  max-height: 300px;
 }
 
 .chart-labels {
