@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Download, Trash2, Activity, Check, Palette, Image as ImageIcon } from 'lucide-react';
+import { Download, Trash2, Activity, Check, Palette, Image as ImageIcon, LogOut, User } from 'lucide-react';
 import { useHealthStore, useHealthConnection, useSettings } from '../store/useHealthStore';
+import { useAuth } from '../contexts/AuthContext';
 import { formatRelativeTime } from '../lib/utils';
 import { toast } from '../lib/toast';
 
@@ -8,6 +9,7 @@ export default function SettingsPage() {
   const { updateSettings, toggleHealthConnection, updateHealthPermissions, exportData, clearAllData } = useHealthStore();
   const healthConnection = useHealthConnection();
   const settings = useSettings();
+  const { user, signOut } = useAuth();
 
   const isConnected = healthConnection?.status === 'connected';
   const units = settings?.units || 'kg';
@@ -68,6 +70,15 @@ export default function SettingsPage() {
 
   const handleClearData = () => {
     clearAllData();
+  };
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast.error('Error signing out');
+    } else {
+      toast.success('Signed out successfully');
+    }
   };
 
   const handleColorChange = (colorKey, value) => {
@@ -628,6 +639,38 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Account Section */}
+      <div className="settings-section">
+        <h2 className="settings-section-title">Account</h2>
+        <div className="settings-card">
+          <div className="settings-item">
+            <div className="settings-item-content">
+              <div className="settings-item-icon">
+                <User size={24} />
+              </div>
+              <div>
+                <div className="settings-item-label">Email</div>
+                <div className="settings-item-value">{user?.email}</div>
+                <div className="settings-item-description">
+                  {user?.user_metadata?.name || 'Health Tracker User'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button
+            className="settings-action-btn danger"
+            onClick={handleSignOut}
+          >
+            <LogOut size={20} />
+            <div>
+              <div className="action-btn-label">Sign Out</div>
+              <div className="action-btn-description">Sign out of your account</div>
+            </div>
+          </button>
         </div>
       </div>
 
