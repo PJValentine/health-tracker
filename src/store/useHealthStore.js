@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { initialMockData, generateWeightHistory, generateMoodHistory } from './mockData';
+import { initialMockData } from './mockData';
 
 // Local storage key
 const STORAGE_KEY = 'health-tracker-data';
 
-// Initialize state from localStorage or use mock data
+// Initialize state from localStorage or use clean initial data
 function loadInitialState() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -16,18 +16,8 @@ function loadInitialState() {
     console.error('Failed to load from localStorage:', error);
   }
 
-  // First time - seed with mock data + generated history
-  return {
-    ...initialMockData,
-    weightEntries: [
-      ...generateWeightHistory(),
-      ...initialMockData.weightEntries,
-    ],
-    moodEntries: [
-      ...generateMoodHistory(),
-      ...initialMockData.moodEntries,
-    ],
-  };
+  // First time - start with clean data (no mock entries)
+  return { ...initialMockData };
 }
 
 // Save to localStorage
