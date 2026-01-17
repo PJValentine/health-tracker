@@ -187,7 +187,10 @@ export function useHealthStore() {
     // Clear all data (reset to initial state)
     clearAllData: useCallback(() => {
       if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-        const newState = loadInitialState();
+        // Clear localStorage
+        localStorage.removeItem(STORAGE_KEY);
+        // Reset to clean initial state
+        const newState = { ...initialMockData };
         updateState(newState);
       }
     }, [updateState]),

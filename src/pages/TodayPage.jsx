@@ -7,6 +7,7 @@ import AppleHealthStatusCard from '../components/AppleHealthStatusCard';
 import WeightLogSheet from '../components/WeightLogSheet';
 import MoodLogSheet from '../components/MoodLogSheet';
 import NutritionNoteSheet from '../components/NutritionNoteSheet';
+import { useAuth } from '../contexts/AuthContext';
 import {
   useWeightEntries,
   useMoodEntries,
@@ -26,11 +27,27 @@ export default function TodayPage() {
   const [moodSheetOpen, setMoodSheetOpen] = useState(false);
   const [nutritionSheetOpen, setNutritionSheetOpen] = useState(false);
 
+  const { user } = useAuth();
   const weightEntries = useWeightEntries();
   const moodEntries = useMoodEntries();
   const nutritionEntries = useNutritionEntries();
   const settings = useSettings();
   const units = settings?.units || 'kg';
+
+  // Get user's first name from auth metadata or settings
+  const getUserFirstName = () => {
+    // Try to get from auth user metadata first
+    if (user?.user_metadata?.name) {
+      return user.user_metadata.name.split(' ')[0];
+    }
+    // Fallback to settings name
+    if (settings?.name && settings.name !== 'Health Tracker User') {
+      return settings.name.split(' ')[0];
+    }
+    return null;
+  };
+
+  const firstName = getUserFirstName();
 
   // Calculate stats
   const weightStats = calculateWeightStats(weightEntries);
@@ -105,7 +122,9 @@ export default function TodayPage() {
               <span>{streak}</span>
             </div>
           </div>
-          <h1 className="hero-title">Hey, There!</h1>
+          <h1 className="hero-title">
+            {firstName ? `Hey, ${firstName}!` : 'Hey, There!'}
+          </h1>
           <p className="hero-subtitle">Keep going strong!</p>
         </div>
       </div>
