@@ -82,7 +82,7 @@
 
 .main-content-inner {
   padding: 1rem;
-  padding-bottom: calc(60px + 1rem); /* Bottom tab bar height + padding */
+  padding-bottom: calc(80px + 2rem); /* Floating bottom bar + spacing */
 }
 
 /* ===== BOTTOM TAB BAR ===== */
@@ -241,9 +241,10 @@
 
 .section-title {
   font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 /* ===== METRIC CARD ===== */
@@ -298,6 +299,24 @@
 .emoji-indicator {
   font-size: 1.25rem;
   line-height: 1;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Emoji Display Classes */
+.emoji-large {
+  font-size: 2.5rem;
+  line-height: 1;
+  display: inline-block;
+}
+
+.emoji-indicator {
+  font-size: 1.5rem;
+  line-height: 1;
+  display: inline-block;
 }
 
 .metric-card-header {
@@ -370,12 +389,12 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 /* ===== QUICK ACTIONS ===== */
 .quick-actions-section {
-  margin: 2rem 0;
+  margin: 2rem 0 2.5rem 0;
 }
 
 .quick-actions-grid {
@@ -417,7 +436,8 @@
 
 /* ===== TIMELINE ===== */
 .timeline-section {
-  margin-top: 2rem;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
 }
 
 .timeline-list {
@@ -497,33 +517,36 @@
 /* ===== EMPTY STATE ===== */
 .empty-state {
   text-align: center;
-  padding: 3rem 1.5rem;
-  background-color: var(--bg-primary);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
+  padding: 4rem 2rem;
+  background-color: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  border: none;
+  box-shadow: var(--shadow);
 }
 
 .empty-state-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
+  font-size: 3.5rem;
+  margin-bottom: 1.25rem;
+  opacity: 0.6;
+  line-height: 1;
 }
 
 .empty-state-title {
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .empty-state-description {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   color: var(--text-secondary);
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
+  line-height: 1.5;
 }
 
 .empty-state-action {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
 }
 
 /* ===== LOG TILES ===== */
@@ -651,14 +674,25 @@
 .form-input,
 .form-textarea {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.875rem 1rem;
   border-radius: var(--border-radius-sm);
   font-size: 1rem;
+  border: 2px solid var(--border-color);
+  background-color: var(--bg-card);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(45, 95, 79, 0.1);
 }
 
 .form-textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 120px;
+  line-height: 1.5;
 }
 
 .form-text {
@@ -1244,19 +1278,25 @@
 
 /* ===== APPLE HEALTH STATUS CARD ===== */
 .health-status-card {
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
+  background-color: var(--bg-card);
+  border: none;
+  border-radius: var(--border-radius-lg);
   padding: 1.5rem;
   display: flex;
   gap: 1rem;
-  margin-bottom: 1.5rem;
-  box-shadow: var(--shadow-sm);
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.health-status-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .health-status-card.connected {
-  border-color: var(--color-success);
-  background-color: #f0fdf4;
+  background: linear-gradient(135deg, rgba(74, 155, 127, 0.08) 0%, var(--bg-card) 100%);
+  border: 2px solid rgba(74, 155, 127, 0.2);
 }
 
 .health-status-icon {

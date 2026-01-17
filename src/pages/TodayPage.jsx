@@ -129,7 +129,7 @@ export default function TodayPage() {
           title="Mood"
           value={
             latestMood ? (
-              <span style={{ fontSize: '2.5rem' }}>{MOOD_EMOJIS[latestMood.moodScore]}</span>
+              <span className="emoji-large">{MOOD_EMOJIS[latestMood.moodScore]}</span>
             ) : (
               'No data'
             )
