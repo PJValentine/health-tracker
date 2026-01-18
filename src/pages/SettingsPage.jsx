@@ -65,10 +65,56 @@ export default function SettingsPage() {
         return;
       }
 
-      // Read file and convert to data URL
+      // Read and compress image
       const reader = new FileReader();
       reader.onload = (event) => {
-        setProfilePicture(event.target.result);
+        const img = new Image();
+        img.onload = () => {
+          // Create canvas for compression
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+
+          // Max dimensions (keep aspect ratio)
+          const MAX_WIDTH = 400;
+          const MAX_HEIGHT = 400;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = (height * MAX_WIDTH) / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = (width * MAX_HEIGHT) / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Compress to JPEG with 0.8 quality
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+          // Check if compressed image is too large (>500KB in base64)
+          if (compressedDataUrl.length > 500 * 1024) {
+            toast.error('Image is too large even after compression. Please use a smaller image.');
+            return;
+          }
+
+          setProfilePicture(compressedDataUrl);
+          toast.success('Image uploaded and compressed');
+        };
+        img.onerror = () => {
+          toast.error('Failed to load image');
+        };
+        img.src = event.target.result;
+      };
+      reader.onerror = () => {
+        toast.error('Failed to read image file');
       };
       reader.readAsDataURL(file);
     }

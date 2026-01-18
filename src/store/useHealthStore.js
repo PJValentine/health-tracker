@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { initialMockData } from './mockData';
+import { supabase } from '../lib/supabase';
+import * as supabaseSync from '../lib/supabaseSync';
 
 // Local storage key
 const STORAGE_KEY = 'health-tracker-data';
@@ -26,6 +28,33 @@ function saveToStorage(data) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
     console.error('Failed to save to localStorage:', error);
+  }
+}
+
+// Get current user ID (helper for Supabase sync)
+async function getUserId() {
+  if (!supabase) return null;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id || null;
+  } catch (error) {
+    console.error('Error getting user:', error);
+    return null;
+  }
+}
+
+// Sync data to Supabase (fire and forget - doesn't block UI)
+async function syncToSupabase(action, ...args) {
+  const userId = await getUserId();
+  if (!userId || !supabase) {
+    console.log('Skipping Supabase sync - no user or Supabase not configured');
+    return;
+  }
+
+  try {
+    await action(userId, ...args);
+  } catch (error) {
+    console.error('Supabase sync failed (data saved locally):', error);
   }
 }
 
@@ -70,18 +99,24 @@ export function useHealthStore() {
   const actions = {
     // Weight entries
     addWeightEntry: useCallback((entry) => {
+      const newEntry = {
+        id: Date.now().toString(),
+        type: 'weight',
+        ...entry,
+        timestamp: entry.timestamp || new Date().toISOString(),
+      };
+
       updateState((prev) => ({
         ...prev,
-        weightEntries: [
-          {
-            id: Date.now().toString(),
-            type: 'weight',
-            ...entry,
-            timestamp: entry.timestamp || new Date().toISOString(),
-          },
-          ...prev.weightEntries,
-        ],
+        weightEntries: [newEntry, ...prev.weightEntries],
       }));
+
+      // Sync to Supabase (async, non-blocking)
+      syncToSupabase(supabaseSync.addWeightLog, {
+        weight: entry.valueKg,
+        timestamp: newEntry.timestamp,
+        notes: entry.note || '',
+      });
     }, [updateState]),
 
     deleteWeightEntry: useCallback((id) => {
@@ -93,18 +128,25 @@ export function useHealthStore() {
 
     // Mood entries
     addMoodEntry: useCallback((entry) => {
+      const newEntry = {
+        id: Date.now().toString(),
+        type: 'mood',
+        ...entry,
+        timestamp: entry.timestamp || new Date().toISOString(),
+      };
+
       updateState((prev) => ({
         ...prev,
-        moodEntries: [
-          {
-            id: Date.now().toString(),
-            type: 'mood',
-            ...entry,
-            timestamp: entry.timestamp || new Date().toISOString(),
-          },
-          ...prev.moodEntries,
-        ],
+        moodEntries: [newEntry, ...prev.moodEntries],
       }));
+
+      // Sync to Supabase (async, non-blocking)
+      syncToSupabase(supabaseSync.addMoodLog, {
+        mood: entry.moodScore,
+        tags: entry.tags || [],
+        notes: entry.note || '',
+        timestamp: newEntry.timestamp,
+      });
     }, [updateState]),
 
     deleteMoodEntry: useCallback((id) => {
@@ -116,18 +158,24 @@ export function useHealthStore() {
 
     // Nutrition entries
     addNutritionEntry: useCallback((entry) => {
+      const newEntry = {
+        id: Date.now().toString(),
+        type: 'nutrition',
+        ...entry,
+        timestamp: entry.timestamp || new Date().toISOString(),
+      };
+
       updateState((prev) => ({
         ...prev,
-        nutritionEntries: [
-          {
-            id: Date.now().toString(),
-            type: 'nutrition',
-            ...entry,
-            timestamp: entry.timestamp || new Date().toISOString(),
-          },
-          ...prev.nutritionEntries,
-        ],
+        nutritionEntries: [newEntry, ...prev.nutritionEntries],
       }));
+
+      // Sync to Supabase (async, non-blocking)
+      syncToSupabase(supabaseSync.addNutritionNote, {
+        mealType: entry.mealType || 'other',
+        notes: entry.text || '',
+        timestamp: newEntry.timestamp,
+      });
     }, [updateState]),
 
     deleteNutritionEntry: useCallback((id) => {
@@ -161,13 +209,15 @@ export function useHealthStore() {
 
     // Settings
     updateSettings: useCallback((newSettings) => {
+      const updated = { ...globalState.settings, ...newSettings };
+
       updateState((prev) => ({
         ...prev,
-        settings: {
-          ...prev.settings,
-          ...newSettings,
-        },
+        settings: updated,
       }));
+
+      // Sync to Supabase (async, non-blocking)
+      syncToSupabase(supabaseSync.updateUserSettings, updated);
     }, [updateState]),
 
     // Export data
@@ -192,6 +242,33 @@ export function useHealthStore() {
         // Reset to clean initial state
         const newState = { ...initialMockData };
         updateState(newState);
+      }
+    }, [updateState]),
+
+    // Load data from Supabase (call after login)
+    loadFromSupabase: useCallback(async () => {
+      const userId = await getUserId();
+      if (!userId || !supabase) {
+        console.log('Cannot load from Supabase - no user or not configured');
+        return false;
+      }
+
+      try {
+        const data = await supabaseSync.syncAllDataFromSupabase(userId);
+
+        updateState((prev) => ({
+          ...prev,
+          settings: data.settings || prev.settings,
+          weightEntries: data.weightEntries || prev.weightEntries,
+          moodEntries: data.moodEntries || prev.moodEntries,
+          nutritionEntries: data.nutritionNotes || prev.nutritionEntries,
+          healthConnection: data.healthConnection || prev.healthConnection,
+        }));
+
+        return true;
+      } catch (error) {
+        console.error('Failed to load from Supabase:', error);
+        return false;
       }
     }, [updateState]),
   };

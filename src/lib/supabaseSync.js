@@ -26,6 +26,8 @@ export async function fetchUserSettings(userId) {
     const defaultSettings = {
       user_id: userId,
       units: 'kg',
+      name: 'Health Tracker User',
+      profile_picture: null,
       theme: {
         primaryColor: '#2D5F4F',
         primaryDark: '#1F4438',
@@ -34,27 +36,6 @@ export async function fetchUserSettings(userId) {
         beige100: '#FBF8F3',
         beige200: '#F5E6D3',
         beige300: '#E8D4BC',
-      },
-      background_image: {
-        url: '',
-        opacity: 0.1,
-        fit: 'cover',
-        position: 'center',
-        enabled: false,
-      },
-      hero_image: {
-        url: '',
-        opacity: 0.3,
-        fit: 'cover',
-        position: 'center',
-        enabled: false,
-      },
-      card_image: {
-        url: '',
-        opacity: 0.05,
-        fit: 'cover',
-        position: 'center',
-        enabled: false,
       },
     };
 
@@ -76,16 +57,20 @@ export async function fetchUserSettings(userId) {
 }
 
 export async function updateUserSettings(userId, settings) {
+  const updateData = {
+    units: settings.units,
+    name: settings.name,
+    theme: settings.theme || {},
+  };
+
+  // Only include profile_picture if it exists
+  if (settings.profilePicture !== undefined) {
+    updateData.profile_picture = settings.profilePicture;
+  }
+
   const { error } = await supabase
     .from('user_settings')
-    .update({
-      units: settings.units,
-      name: settings.name,
-      theme: settings.theme,
-      background_image: settings.backgroundImage,
-      hero_image: settings.heroImage,
-      card_image: settings.cardImage,
-    })
+    .update(updateData)
     .eq('user_id', userId);
 
   if (error) {
@@ -98,10 +83,8 @@ function transformSettingsFromDB(dbSettings) {
   return {
     units: dbSettings.units,
     name: dbSettings.name,
-    theme: dbSettings.theme,
-    backgroundImage: dbSettings.background_image,
-    heroImage: dbSettings.hero_image,
-    cardImage: dbSettings.card_image,
+    profilePicture: dbSettings.profile_picture || null,
+    theme: dbSettings.theme || {},
   };
 }
 
