@@ -23,40 +23,61 @@ export default function ResetPasswordPage() {
       }
 
       try {
-        // Get token from URL parameters
+        // Check for hash-based tokens first (modern Supabase)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        // Check for query-based tokens (recovery links)
         const token = searchParams.get('token');
         const type = searchParams.get('type');
 
-        console.log('Reset token validation:', { token: token ? 'present' : 'missing', type });
+        console.log('Reset token validation:', {
+          hashToken: accessToken ? 'present' : 'missing',
+          queryToken: token ? 'present' : 'missing',
+          type
+        });
 
-        // If no token in URL, check if session already exists
-        if (!token) {
+        // Handle hash-based tokens (auto session)
+        if (accessToken && refreshToken) {
+          console.log('Hash-based token found - session should be auto-established');
           const { data: { session } } = await supabase.auth.getSession();
-          if (!session) {
-            setError('No reset token found. Please click the reset link from your email.');
+          if (session) {
+            console.log('Session validated successfully from hash');
+            setValidatingToken(false);
+            return;
+          }
+        }
+
+        // Handle query-based recovery token
+        if (token && type === 'recovery') {
+          console.log('Exchanging recovery token for session...');
+
+          // Use verifyOtp to exchange the token for a session
+          const { data, error: verifyError } = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: 'recovery'
+          });
+
+          if (verifyError) {
+            console.error('Token verification error:', verifyError);
+            setError('Invalid or expired reset link. Please request a new password reset.');
+          } else if (data.session) {
+            console.log('Session created successfully from recovery token');
+            // Session is now established
           } else {
-            console.log('Existing session found');
+            setError('Failed to establish session. Please try again.');
           }
           setValidatingToken(false);
           return;
         }
 
-        // Exchange token for session (for older Supabase versions)
-        // Modern Supabase should auto-exchange, but we'll verify
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          setError('Failed to validate reset token. Please try requesting a new password reset.');
-        } else if (!session) {
-          // Try to refresh the session in case it wasn't auto-established
-          const { error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) {
-            console.error('Refresh error:', refreshError);
-            setError('Invalid or expired reset link. Please request a new password reset.');
-          }
+        // No token found - check if session already exists
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setError('No reset token found. Please click the reset link from your email.');
         } else {
-          console.log('Session validated successfully');
+          console.log('Existing session found');
         }
       } catch (err) {
         console.error('Token validation error:', err);
