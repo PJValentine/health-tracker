@@ -9,26 +9,27 @@
   margin: 0 auto;
   background-color: var(--bg-app);
   overflow-x: hidden;
+  position: relative;
 }
 
-/* Responsive max-widths for better desktop experience */
-@media (min-width: 768px) {
-  .app-shell {
-    max-width: 768px;
-  }
+.app-shell::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('https://images.pexels.com/photos/808466/pexels-photo-808466.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  opacity: 0.5;
+  z-index: -1;
+  pointer-events: none;
 }
 
-@media (min-width: 1024px) {
-  .app-shell {
-    max-width: 1200px;
-  }
-}
-
-@media (min-width: 1440px) {
-  .app-shell {
-    max-width: 1400px;
-  }
-}
+/* Responsive max-widths removed for 100% width - app is now full width */
 
 /* Top Bar */
 .top-bar {
@@ -1977,26 +1978,7 @@
 }
 
 /* Background Image Styles */
-.app-shell {
-  position: relative;
-}
-
-.app-shell::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: var(--app-bg-image);
-  background-size: var(--app-bg-size, cover);
-  background-position: var(--app-bg-position, center);
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  opacity: var(--app-bg-opacity, 0);
-  z-index: -1;
-  pointer-events: none;
-}
+/* Background image is now set in .app-shell::before at 50% opacity */
 
 .hero-section {
   position: relative;
