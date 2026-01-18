@@ -45,10 +45,15 @@ export default function SettingsPage() {
     setShowClearDataConfirm(true);
   };
 
-  const handleClearDataConfirm = () => {
-    clearAllData();
-    setShowClearDataConfirm(false);
-    toast.success('All data cleared');
+  const handleClearDataConfirm = async () => {
+    try {
+      await clearAllData();
+      setShowClearDataConfirm(false);
+      toast.success('All data cleared from both local storage and database');
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      toast.error('Error clearing data. Please try again.');
+    }
   };
 
   const handleSignOut = async () => {

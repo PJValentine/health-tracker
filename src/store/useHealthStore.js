@@ -264,13 +264,34 @@ export function useHealthStore() {
     }, []),
 
     // Clear all data (reset to initial state)
-    clearAllData: useCallback(() => {
-      // Clear localStorage
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(USER_ID_KEY);
-      // Reset to clean initial state
-      const newState = { ...initialMockData };
-      updateState(newState);
+    clearAllData: useCallback(async () => {
+      try {
+        // Get current user ID before clearing
+        const userId = await getUserId();
+
+        // Clear from Supabase if user is logged in
+        if (userId && supabase) {
+          console.log('Clearing all data from Supabase for user:', userId);
+          await supabaseSync.deleteAllUserData(userId);
+        }
+
+        // Clear localStorage
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(USER_ID_KEY);
+
+        // Reset to clean initial state
+        const newState = { ...initialMockData };
+        updateState(newState);
+
+        console.log('All data cleared successfully');
+      } catch (error) {
+        console.error('Error clearing data:', error);
+        // Still clear localStorage even if Supabase fails
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(USER_ID_KEY);
+        const newState = { ...initialMockData };
+        updateState(newState);
+      }
     }, [updateState]),
 
     // Load data from Supabase (call after login)

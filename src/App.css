@@ -224,9 +224,10 @@
   right: -20%;
   width: min(300px, 80vw);
   height: min(300px, 80vw);
-  background: radial-gradient(circle, rgba(45, 95, 79, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(45, 95, 79, 1) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
+  opacity: 1;
 }
 
 .hero-content {

@@ -341,6 +341,54 @@ function transformHealthConnectionFromDB(dbConnection) {
 }
 
 // ============================================
+// DELETE ALL USER DATA
+// ============================================
+
+export async function deleteAllUserData(userId) {
+  try {
+    console.log('Deleting all data for user:', userId);
+
+    // Delete all data in parallel
+    const [
+      weightResult,
+      moodResult,
+      nutritionResult,
+      settingsResult,
+      healthResult
+    ] = await Promise.allSettled([
+      supabase.from('weight_logs').delete().eq('user_id', userId),
+      supabase.from('mood_logs').delete().eq('user_id', userId),
+      supabase.from('nutrition_notes').delete().eq('user_id', userId),
+      supabase.from('user_settings').delete().eq('user_id', userId),
+      supabase.from('health_connections').delete().eq('user_id', userId),
+    ]);
+
+    // Log any errors but don't throw (some tables might be empty)
+    if (weightResult.status === 'rejected') {
+      console.error('Error deleting weight logs:', weightResult.reason);
+    }
+    if (moodResult.status === 'rejected') {
+      console.error('Error deleting mood logs:', moodResult.reason);
+    }
+    if (nutritionResult.status === 'rejected') {
+      console.error('Error deleting nutrition notes:', nutritionResult.reason);
+    }
+    if (settingsResult.status === 'rejected') {
+      console.error('Error deleting user settings:', settingsResult.reason);
+    }
+    if (healthResult.status === 'rejected') {
+      console.error('Error deleting health connection:', healthResult.reason);
+    }
+
+    console.log('Successfully deleted all user data from Supabase');
+    return true;
+  } catch (error) {
+    console.error('Error deleting user data from Supabase:', error);
+    throw error;
+  }
+}
+
+// ============================================
 // SYNC ALL DATA
 // ============================================
 
