@@ -1543,6 +1543,7 @@
   border-radius: var(--border-radius-lg);
   padding: 1.5rem;
   display: flex;
+  align-items: center;
   gap: 1rem;
   margin-bottom: 2rem;
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
@@ -1584,7 +1585,12 @@
 .health-status-sync {
   font-size: 0.75rem;
   color: var(--text-secondary);
-  margin-bottom: 1rem;
+  margin-bottom: 0;
+}
+
+.health-status-button {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* ===== RESPONSIVE ===== */

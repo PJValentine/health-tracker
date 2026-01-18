@@ -29,14 +29,14 @@ export default function AppleHealthStatusCard() {
             Last synced {formatRelativeTime(healthConnection.lastSyncAt)}
           </p>
         )}
-
-        <button
-          className={`btn ${isConnected ? 'btn-secondary' : 'btn-primary'}`}
-          onClick={toggleHealthConnection}
-        >
-          {isConnected ? 'Disconnect' : 'Connect Now'}
-        </button>
       </div>
+
+      <button
+        className={`btn ${isConnected ? 'btn-secondary' : 'btn-primary'} health-status-button`}
+        onClick={toggleHealthConnection}
+      >
+        {isConnected ? 'Disconnect' : 'Connect Now'}
+      </button>
     </div>
   );
 }
