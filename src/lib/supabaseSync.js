@@ -13,16 +13,15 @@ export async function fetchUserSettings(userId) {
     .from('user_settings')
     .select('*')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle(); // FIX: Use maybeSingle() instead of single() to handle no rows gracefully
 
-  if (error && error.code !== 'PGRST116') {
-    // PGRST116 is "no rows returned"
+  if (error) {
     console.error('Error fetching settings:', error);
     return null;
   }
 
   if (!data) {
-    // Create default settings for new user
+    // Create default settings for new user using upsert
     const defaultSettings = {
       user_id: userId,
       units: 'kg',
@@ -39,15 +38,17 @@ export async function fetchUserSettings(userId) {
       },
     };
 
-    const { data: newData, error: insertError } = await supabase
+    // FIX: Use upsert to handle conflicts gracefully
+    const { data: newData, error: upsertError } = await supabase
       .from('user_settings')
-      .insert(defaultSettings)
+      .upsert(defaultSettings, { onConflict: 'user_id' })
       .select()
       .single();
 
-    if (insertError) {
-      console.error('Error creating settings:', insertError);
-      return null;
+    if (upsertError) {
+      console.error('Error creating settings:', upsertError);
+      // Return default settings locally even if DB fails
+      return transformSettingsFromDB(defaultSettings);
     }
 
     return transformSettingsFromDB(newData);
@@ -58,6 +59,7 @@ export async function fetchUserSettings(userId) {
 
 export async function updateUserSettings(userId, settings) {
   const updateData = {
+    user_id: userId,
     units: settings.units,
     name: settings.name,
     theme: settings.theme || {},
@@ -68,10 +70,10 @@ export async function updateUserSettings(userId, settings) {
     updateData.profile_picture = settings.profilePicture;
   }
 
+  // FIX: Use upsert instead of update to handle missing rows
   const { error } = await supabase
     .from('user_settings')
-    .update(updateData)
-    .eq('user_id', userId);
+    .upsert(updateData, { onConflict: 'user_id' });
 
   if (error) {
     console.error('Error updating settings:', error);
@@ -143,9 +145,9 @@ function transformWeightLogFromDB(dbLog) {
   return {
     id: dbLog.id,
     type: 'weight',
-    weight: parseFloat(dbLog.weight),
+    valueKg: parseFloat(dbLog.weight), // FIX: Changed from 'weight' to 'valueKg' to match app schema
     timestamp: new Date(dbLog.date).toISOString(),
-    notes: dbLog.notes,
+    note: dbLog.notes, // FIX: Changed from 'notes' to 'note' to match app schema
   };
 }
 
@@ -205,9 +207,9 @@ function transformMoodLogFromDB(dbLog) {
   return {
     id: dbLog.id,
     type: 'mood',
-    mood: dbLog.mood,
+    moodScore: dbLog.mood, // FIX: Changed from 'mood' to 'moodScore' to match app schema
     tags: dbLog.tags || [],
-    notes: dbLog.notes,
+    note: dbLog.notes, // FIX: Changed from 'notes' to 'note' to match app schema
     timestamp: new Date(dbLog.date).toISOString(),
   };
 }
@@ -268,7 +270,7 @@ function transformNutritionNoteFromDB(dbNote) {
     id: dbNote.id,
     type: 'nutrition',
     mealType: dbNote.meal_type,
-    notes: dbNote.notes,
+    text: dbNote.notes, // FIX: Changed from 'notes' to 'text' to match app schema
     timestamp: new Date(dbNote.date).toISOString(),
   };
 }

@@ -26,18 +26,26 @@ export function formatRelativeTime(date) {
 
 // Weight conversion utilities
 export function kgToLb(kg) {
-  return Math.round(kg * 2.20462 * 10) / 10;
+  const value = parseFloat(kg);
+  if (isNaN(value) || value == null) return 0;
+  return Math.round(value * 2.20462 * 10) / 10;
 }
 
 export function lbToKg(lb) {
-  return Math.round(lb / 2.20462 * 10) / 10;
+  const value = parseFloat(lb);
+  if (isNaN(value) || value == null) return 0;
+  return Math.round(value / 2.20462 * 10) / 10;
 }
 
 export function formatWeight(valueKg, units = 'kg') {
-  if (units === 'lb') {
-    return `${kgToLb(valueKg)} lb`;
+  const value = parseFloat(valueKg);
+  if (isNaN(value) || value == null) {
+    return units === 'lb' ? '-- lb' : '-- kg';
   }
-  return `${valueKg} kg`;
+  if (units === 'lb') {
+    return `${kgToLb(value)} lb`;
+  }
+  return `${value} kg`;
 }
 
 // Mood utilities
@@ -83,8 +91,15 @@ export const MEAL_ICONS = {
 // Calculate statistics
 export function calculateAverage(numbers) {
   if (!numbers || numbers.length === 0) return 0;
-  const sum = numbers.reduce((acc, n) => acc + n, 0);
-  return Math.round((sum / numbers.length) * 10) / 10;
+  // Filter out invalid values
+  const validNumbers = numbers.filter(n => {
+    const parsed = parseFloat(n);
+    return !isNaN(parsed) && parsed != null;
+  }).map(n => parseFloat(n));
+
+  if (validNumbers.length === 0) return 0;
+  const sum = validNumbers.reduce((acc, n) => acc + n, 0);
+  return Math.round((sum / validNumbers.length) * 10) / 10;
 }
 
 export function calculateWeightStats(weightEntries) {
@@ -97,17 +112,23 @@ export function calculateWeightStats(weightEntries) {
     (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
   );
 
-  const latest = sorted[0]?.valueKg || null;
+  // Parse and validate latest weight
+  const latestWeight = sorted[0]?.valueKg;
+  const latest = latestWeight != null ? parseFloat(latestWeight) : null;
+  if (latest === null || isNaN(latest)) {
+    return { latest: null, sevenDayAvg: null, change: null };
+  }
 
   // Calculate 7-day average
   const sevenDaysAgo = subDays(new Date(), 7);
-  const recentWeights = sorted.filter(
-    (entry) => new Date(entry.timestamp) >= sevenDaysAgo
-  );
+  const recentWeights = sorted
+    .filter((entry) => new Date(entry.timestamp) >= sevenDaysAgo)
+    .map((e) => e.valueKg)
+    .filter(w => w != null && !isNaN(parseFloat(w)));
 
   const sevenDayAvg =
     recentWeights.length > 0
-      ? calculateAverage(recentWeights.map((e) => e.valueKg))
+      ? calculateAverage(recentWeights)
       : null;
 
   const change = latest && sevenDayAvg ? latest - sevenDayAvg : null;
