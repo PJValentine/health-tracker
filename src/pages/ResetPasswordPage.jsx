@@ -28,13 +28,13 @@ export default function ResetPasswordPage() {
         console.log('Hash:', window.location.hash);
         console.log('Search:', window.location.search);
 
-        // Check for hash-based tokens first (modern Supabase)
+        // Check for hash-based tokens first (modern Supabase - this is the correct format)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
         const hashType = hashParams.get('type');
 
-        // Check for query-based tokens (recovery links)
+        // Check for query-based tokens (old format - being phased out)
         const token = searchParams.get('token');
         const type = searchParams.get('type');
 
@@ -46,23 +46,34 @@ export default function ResetPasswordPage() {
           queryType: type || 'none'
         });
 
-        // Handle hash-based tokens (auto session)
+        // Handle hash-based tokens (modern Supabase - tokens in URL fragment)
+        // This is the CORRECT format when using {{ .ConfirmationURL }}
         if (accessToken && refreshToken) {
-          console.log('Hash-based token found - session should be auto-established');
+          console.log('✓ Hash-based recovery tokens found (correct format!)');
+
+          // Session is auto-established by Supabase from hash parameters
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
-            console.log('✓ Session validated successfully from hash');
+            console.log('✓ Session auto-established from hash tokens');
+            console.log('✓ User can now reset password');
+            console.log('Session user:', session.user?.id);
+            // Don't redirect - show the password reset form
+            setValidatingToken(false);
+            return;
+          } else {
+            console.error('❌ Hash tokens present but session not established');
+            setError('Failed to establish session from reset link. Please try again.');
             setValidatingToken(false);
             return;
           }
         }
 
-        // Handle query-based recovery token (with or without type parameter)
+        // Handle query-based recovery token (old format)
         if (token) {
-          console.log('Query token found, attempting verification...');
+          console.log('⚠️  Query-based token found (old format)');
+          console.log('Attempting verifyOtp to exchange token for session...');
 
           // Try verifyOtp with recovery type
-          console.log('Attempting verifyOtp with token_hash...');
           const { data, error: verifyError } = await supabase.auth.verifyOtp({
             token_hash: token,
             type: 'recovery'
@@ -83,17 +94,10 @@ export default function ResetPasswordPage() {
           }
 
           if (data.session) {
-            console.log('✓ Session created successfully from recovery token');
+            console.log('✓ Session created from query token');
+            console.log('✓ User can now reset password');
             console.log('Session user:', data.session.user?.id);
-
-            // Verify session is accessible via getSession()
-            const { data: { session: currentSession } } = await supabase.auth.getSession();
-            if (!currentSession) {
-              console.error('❌ Session not accessible after verifyOtp');
-              setError('Failed to establish session. Please try again.');
-            } else {
-              console.log('✓ Session verified and accessible');
-            }
+            // Don't redirect - show the password reset form
             setValidatingToken(false);
             return;
           } else {
@@ -108,10 +112,11 @@ export default function ResetPasswordPage() {
         console.log('No token found in URL, checking for existing session...');
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          console.error('❌ No session exists');
+          console.error('❌ No session exists and no reset token found');
           setError('No reset token found. Please click the reset link from your email.');
         } else {
-          console.log('✓ Existing session found');
+          console.log('✓ Existing session found - allowing password reset');
+          // User has a session, allow them to change password
         }
       } catch (err) {
         console.error('❌ Token validation error:', err);
@@ -222,6 +227,14 @@ export default function ResetPasswordPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
+          {!error && (
+            <div className="form-helper" style={{ marginBottom: '1rem', borderColor: 'var(--color-primary)' }}>
+              <p style={{ margin: 0, fontSize: '0.875rem' }}>
+                ✓ Reset link validated. Enter your new password to update your account.
+              </p>
+            </div>
+          )}
+
           {error && (
             <div className="error-message">
               <AlertCircle size={20} />
