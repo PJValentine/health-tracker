@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Lock, AlertCircle, CheckCircle } from 'lucide-react';
 
@@ -9,21 +9,65 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [validatingToken, setValidatingToken] = useState(true);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  // Check if we have a valid session from the reset link
+  // Validate token from URL and establish session
   useEffect(() => {
-    if (!supabase) {
-      setError('Authentication is not configured');
-      return;
-    }
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        setError('Invalid or expired reset link. Please request a new password reset.');
+    const validateResetToken = async () => {
+      if (!supabase) {
+        setError('Authentication is not configured');
+        setValidatingToken(false);
+        return;
       }
-    });
-  }, []);
+
+      try {
+        // Get token from URL parameters
+        const token = searchParams.get('token');
+        const type = searchParams.get('type');
+
+        console.log('Reset token validation:', { token: token ? 'present' : 'missing', type });
+
+        // If no token in URL, check if session already exists
+        if (!token) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            setError('No reset token found. Please click the reset link from your email.');
+          } else {
+            console.log('Existing session found');
+          }
+          setValidatingToken(false);
+          return;
+        }
+
+        // Exchange token for session (for older Supabase versions)
+        // Modern Supabase should auto-exchange, but we'll verify
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setError('Failed to validate reset token. Please try requesting a new password reset.');
+        } else if (!session) {
+          // Try to refresh the session in case it wasn't auto-established
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.error('Refresh error:', refreshError);
+            setError('Invalid or expired reset link. Please request a new password reset.');
+          }
+        } else {
+          console.log('Session validated successfully');
+        }
+      } catch (err) {
+        console.error('Token validation error:', err);
+        setError('An error occurred validating your reset link. Please try again.');
+      } finally {
+        setValidatingToken(false);
+      }
+    };
+
+    validateResetToken();
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,24 +87,49 @@ export default function ResetPasswordPage() {
         throw new Error('Password must be at least 6 characters');
       }
 
+      console.log('Attempting to update password...');
+
       // Update the user's password
-      const { error } = await supabase.auth.updateUser({
+      const { error: updateError } = await supabase.auth.updateUser({
         password: password,
       });
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Password update error:', updateError);
+        throw updateError;
+      }
 
+      console.log('Password updated successfully');
       setSuccess(true);
+
+      // Sign out after password reset for security
+      await supabase.auth.signOut();
+
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (err) {
       console.error('Reset password error:', err);
-      setError(err.message || 'An error occurred');
+      setError(err.message || 'An error occurred while resetting your password');
     } finally {
       setLoading(false);
     }
   };
+
+  // Loading state while validating token
+  if (validatingToken) {
+    return (
+      <div className="login-container">
+        <div className="login-card">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <h1 className="login-title">Validating Reset Link...</h1>
+            <p className="login-subtitle">Please wait</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -108,6 +177,7 @@ export default function ResetPasswordPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
+                disabled={!!error}
               />
             </div>
           </div>
@@ -124,6 +194,7 @@ export default function ResetPasswordPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={6}
+                disabled={!!error}
               />
             </div>
           </div>
@@ -131,10 +202,16 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             className="btn btn-primary btn-block"
-            disabled={loading}
+            disabled={loading || !!error}
           >
             {loading ? 'Updating Password...' : 'Reset Password'}
           </button>
+
+          {error && (
+            <div className="form-helper">
+              <p>If this link has expired, please request a new password reset from the login page.</p>
+            </div>
+          )}
         </form>
 
         <div className="login-footer">
