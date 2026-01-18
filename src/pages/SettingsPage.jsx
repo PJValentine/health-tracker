@@ -4,6 +4,7 @@ import { useHealthStore, useHealthConnection, useSettings } from '../store/useHe
 import { useAuth } from '../contexts/AuthContext';
 import { formatRelativeTime } from '../lib/utils';
 import { toast } from '../lib/toast';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function SettingsPage() {
   const { updateSettings, toggleHealthConnection, updateHealthPermissions, exportData, clearAllData } = useHealthStore();
@@ -18,6 +19,9 @@ export default function SettingsPage() {
   const [name, setName] = useState(settings?.name || 'Health Tracker User');
   const [profilePicture, setProfilePicture] = useState(settings?.profilePicture || null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  // Confirm dialog state
+  const [showClearDataConfirm, setShowClearDataConfirm] = useState(false);
 
   const handleUnitsChange = (newUnits) => {
     updateSettings({ units: newUnits });
@@ -37,8 +41,14 @@ export default function SettingsPage() {
     toast.success('Data exported successfully');
   };
 
-  const handleClearData = () => {
+  const handleClearDataClick = () => {
+    setShowClearDataConfirm(true);
+  };
+
+  const handleClearDataConfirm = () => {
     clearAllData();
+    setShowClearDataConfirm(false);
+    toast.success('All data cleared');
   };
 
   const handleSignOut = async () => {
@@ -352,7 +362,7 @@ export default function SettingsPage() {
 
           <button
             className="settings-action-btn danger"
-            onClick={handleClearData}
+            onClick={handleClearDataClick}
           >
             <Trash2 size={20} />
             <div>
@@ -368,6 +378,18 @@ export default function SettingsPage() {
         <p className="app-version">Health Tracker v0.1.0</p>
         <p className="app-copyright">Built with React + Vite</p>
       </div>
+
+      {/* Confirm Dialogs */}
+      <ConfirmDialog
+        isOpen={showClearDataConfirm}
+        title="Clear All Data?"
+        message="This will permanently delete all your weight logs, mood entries, and nutrition notes. This action cannot be undone."
+        confirmText="Clear Data"
+        cancelText="Cancel"
+        onConfirm={handleClearDataConfirm}
+        onCancel={() => setShowClearDataConfirm(false)}
+        danger={true}
+      />
     </div>
   );
 }

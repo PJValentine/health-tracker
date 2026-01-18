@@ -265,13 +265,12 @@ export function useHealthStore() {
 
     // Clear all data (reset to initial state)
     clearAllData: useCallback(() => {
-      if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-        // Clear localStorage
-        localStorage.removeItem(STORAGE_KEY);
-        // Reset to clean initial state
-        const newState = { ...initialMockData };
-        updateState(newState);
-      }
+      // Clear localStorage
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(USER_ID_KEY);
+      // Reset to clean initial state
+      const newState = { ...initialMockData };
+      updateState(newState);
     }, [updateState]),
 
     // Load data from Supabase (call after login)
