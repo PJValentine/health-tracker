@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { clearLocalStorage } from '../store/useHealthStore';
 
 const AuthContext = createContext({});
 
@@ -37,9 +38,15 @@ export const AuthProvider = ({ children }) => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Clear localStorage when user signs out
+      if (event === 'SIGNED_OUT' || !session) {
+        console.log('User signed out - clearing localStorage');
+        clearLocalStorage();
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -81,6 +88,10 @@ export const AuthProvider = ({ children }) => {
     if (!supabase) {
       return { error: new Error('Supabase client not initialized') };
     }
+
+    // Clear localStorage before signing out to prevent data leakage
+    clearLocalStorage();
+
     const { error } = await supabase.auth.signOut();
     return { error };
   };

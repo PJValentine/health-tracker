@@ -5,13 +5,17 @@ import * as supabaseSync from '../lib/supabaseSync';
 
 // Local storage key
 const STORAGE_KEY = 'health-tracker-data';
+const USER_ID_KEY = 'health-tracker-user-id';
 
 // Initialize state from localStorage or use clean initial data
 function loadInitialState() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
+    const storedUserId = localStorage.getItem(USER_ID_KEY);
+
     if (stored) {
       const parsed = JSON.parse(stored);
+      console.log('Loaded from localStorage for user:', storedUserId || 'anonymous');
       return parsed;
     }
   } catch (error) {
@@ -22,12 +26,37 @@ function loadInitialState() {
   return { ...initialMockData };
 }
 
-// Save to localStorage
-function saveToStorage(data) {
+// Save to localStorage with user ID
+async function saveToStorage(data) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+    // Store current user ID to prevent cross-user data contamination
+    const userId = await getUserId();
+    if (userId) {
+      localStorage.setItem(USER_ID_KEY, userId);
+    }
   } catch (error) {
     console.error('Failed to save to localStorage:', error);
+  }
+}
+
+// Clear localStorage data and reset global state
+export function clearLocalStorage() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(USER_ID_KEY);
+    console.log('Cleared localStorage');
+
+    // Reset global state to initial data
+    globalState = { ...initialMockData };
+
+    // Notify all listeners of the reset
+    listeners.forEach((listener) => {
+      listener(globalState);
+    });
+  } catch (error) {
+    console.error('Failed to clear localStorage:', error);
   }
 }
 
@@ -254,17 +283,29 @@ export function useHealthStore() {
       }
 
       try {
+        console.log('Loading data from Supabase for user:', userId);
+
+        // Check if localStorage has different user's data
+        const storedUserId = localStorage.getItem(USER_ID_KEY);
+        if (storedUserId && storedUserId !== userId) {
+          console.warn('Different user detected - clearing old user data from localStorage');
+          clearLocalStorage();
+        }
+
         const data = await supabaseSync.syncAllDataFromSupabase(userId);
 
-        updateState((prev) => ({
-          ...prev,
-          settings: data.settings || prev.settings,
-          weightEntries: data.weightEntries || prev.weightEntries,
-          moodEntries: data.moodEntries || prev.moodEntries,
-          nutritionEntries: data.nutritionNotes || prev.nutritionEntries,
-          healthConnection: data.healthConnection || prev.healthConnection,
-        }));
+        // REPLACE data completely, don't merge - this ensures clean user isolation
+        const newState = {
+          settings: data.settings || { ...initialMockData.settings },
+          weightEntries: data.weightEntries || [],
+          moodEntries: data.moodEntries || [],
+          nutritionEntries: data.nutritionNotes || [],
+          healthConnection: data.healthConnection || { ...initialMockData.healthConnection },
+        };
 
+        updateState(newState);
+
+        console.log('Successfully loaded and replaced data from Supabase');
         return true;
       } catch (error) {
         console.error('Failed to load from Supabase:', error);
