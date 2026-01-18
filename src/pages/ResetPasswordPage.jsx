@@ -64,7 +64,16 @@ export default function ResetPasswordPage() {
             setError('Invalid or expired reset link. Please request a new password reset.');
           } else if (data.session) {
             console.log('Session created successfully from recovery token');
-            // Session is now established
+            console.log('Session user:', data.session.user?.id);
+
+            // Verify session is accessible via getSession()
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            if (!currentSession) {
+              console.error('Session not accessible after verifyOtp');
+              setError('Failed to establish session. Please try again.');
+            } else {
+              console.log('Session verified and accessible');
+            }
           } else {
             setError('Failed to establish session. Please try again.');
           }
@@ -109,6 +118,15 @@ export default function ResetPasswordPage() {
       }
 
       console.log('Attempting to update password...');
+
+      // Verify session exists before updating password
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found when attempting to update password');
+        throw new Error('Your session has expired. Please click the reset link from your email again.');
+      }
+
+      console.log('Session verified, updating password for user:', session.user.id);
 
       // Update the user's password
       const { error: updateError } = await supabase.auth.updateUser({
