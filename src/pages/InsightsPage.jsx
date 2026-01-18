@@ -48,7 +48,9 @@ export default function InsightsPage() {
 
   // Filter nutrition entries
   const filteredNutrition = nutritionEntries.filter((entry) => {
-    const matchesSearch = searchQuery === '' || entry.text.toLowerCase().includes(searchQuery.toLowerCase());
+    // FIX: Add null check for entry.text to prevent crash
+    const text = entry.text || '';
+    const matchesSearch = searchQuery === '' || text.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesMealType = mealTypeFilter === 'all' || entry.mealType === mealTypeFilter;
     return matchesSearch && matchesMealType;
   });

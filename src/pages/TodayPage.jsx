@@ -7,6 +7,7 @@ import AppleHealthStatusCard from '../components/AppleHealthStatusCard';
 import WeightLogSheet from '../components/WeightLogSheet';
 import MoodLogSheet from '../components/MoodLogSheet';
 import NutritionNoteSheet from '../components/NutritionNoteSheet';
+import { useAuth } from '../contexts/AuthContext';
 import {
   useWeightEntries,
   useMoodEntries,
@@ -26,11 +27,27 @@ export default function TodayPage() {
   const [moodSheetOpen, setMoodSheetOpen] = useState(false);
   const [nutritionSheetOpen, setNutritionSheetOpen] = useState(false);
 
+  const { user } = useAuth();
   const weightEntries = useWeightEntries();
   const moodEntries = useMoodEntries();
   const nutritionEntries = useNutritionEntries();
   const settings = useSettings();
   const units = settings?.units || 'kg';
+
+  // Get user's first name from auth metadata or settings
+  const getUserFirstName = () => {
+    // Try to get from auth user metadata first
+    if (user?.user_metadata?.name) {
+      return user.user_metadata.name.split(' ')[0];
+    }
+    // Fallback to settings name
+    if (settings?.name && settings.name !== 'Health Tracker User') {
+      return settings.name.split(' ')[0];
+    }
+    return null;
+  };
+
+  const firstName = getUserFirstName();
 
   // Calculate stats
   const weightStats = calculateWeightStats(weightEntries);
@@ -74,22 +91,16 @@ export default function TodayPage() {
 
   const streak = calculateStreak();
 
-  // Apply hero image via CSS variables
-  const heroClassName = settings?.heroImage?.enabled && settings?.heroImage?.url
-    ? 'hero-section with-image'
-    : 'hero-section';
+  // Hardcoded hero image
+  const heroClassName = 'hero-section with-image';
 
   useEffect(() => {
-    if (settings?.heroImage?.enabled && settings?.heroImage?.url) {
-      document.documentElement.style.setProperty('--hero-bg-image', `url(${settings.heroImage.url})`);
-      document.documentElement.style.setProperty('--hero-bg-size', settings.heroImage.fit);
-      document.documentElement.style.setProperty('--hero-bg-position', settings.heroImage.position);
-      document.documentElement.style.setProperty('--hero-bg-opacity', settings.heroImage.opacity);
-    } else {
-      document.documentElement.style.removeProperty('--hero-bg-image');
-      document.documentElement.style.removeProperty('--hero-bg-opacity');
-    }
-  }, [settings?.heroImage]);
+    // Hardcode the hero image to the Pexels nature photo
+    document.documentElement.style.setProperty('--hero-bg-image', `url(https://images.pexels.com/photos/808466/pexels-photo-808466.jpeg)`);
+    document.documentElement.style.setProperty('--hero-bg-size', 'cover');
+    document.documentElement.style.setProperty('--hero-bg-position', 'center');
+    document.documentElement.style.setProperty('--hero-bg-opacity', '0.3');
+  }, []);
 
   return (
     <div className="page page-today">
@@ -98,14 +109,20 @@ export default function TodayPage() {
         <div className="hero-content">
           <div className="hero-header">
             <div className="hero-avatar">
-              <User size={32} />
+              {settings?.profilePicture ? (
+                <img src={settings.profilePicture} alt="Profile" className="hero-avatar-image" />
+              ) : (
+                <User size={32} />
+              )}
             </div>
             <div className="hero-streak">
               <Flame size={16} />
               <span>{streak}</span>
             </div>
           </div>
-          <h1 className="hero-title">Hey, There!</h1>
+          <h1 className="hero-title">
+            {firstName ? `Hey, ${firstName}!` : 'Hey, There!'}
+          </h1>
           <p className="hero-subtitle">Keep going strong!</p>
         </div>
       </div>

@@ -26,7 +26,8 @@ export const initialMockData = {
   settings: {
     units: 'kg', // 'kg' | 'lb'
     name: 'Health Tracker User',
-    // Theme customization
+    profilePicture: null, // URL to profile picture
+    // Theme customization (hardcoded, not editable)
     theme: {
       primaryColor: '#2D5F4F',
       primaryDark: '#1F4438',
@@ -35,30 +36,6 @@ export const initialMockData = {
       beige100: '#FBF8F3',
       beige200: '#F5E6D3',
       beige300: '#E8D4BC',
-    },
-    // Background image customization
-    backgroundImage: {
-      url: '',
-      opacity: 0.1,
-      fit: 'cover', // 'cover' | 'contain' | 'fill' | 'none'
-      position: 'center', // 'center' | 'top' | 'bottom' | 'left' | 'right'
-      enabled: false,
-    },
-    // Hero section image customization
-    heroImage: {
-      url: '',
-      opacity: 0.3,
-      fit: 'cover',
-      position: 'center',
-      enabled: false,
-    },
-    // Card background image customization
-    cardImage: {
-      url: '',
-      opacity: 0.05,
-      fit: 'cover',
-      position: 'center',
-      enabled: false,
     },
   },
 };

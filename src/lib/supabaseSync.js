@@ -13,19 +13,20 @@ export async function fetchUserSettings(userId) {
     .from('user_settings')
     .select('*')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle(); // FIX: Use maybeSingle() instead of single() to handle no rows gracefully
 
-  if (error && error.code !== 'PGRST116') {
-    // PGRST116 is "no rows returned"
+  if (error) {
     console.error('Error fetching settings:', error);
     return null;
   }
 
   if (!data) {
-    // Create default settings for new user
+    // Create default settings for new user using upsert
     const defaultSettings = {
       user_id: userId,
       units: 'kg',
+      name: 'Health Tracker User',
+      profile_picture: null,
       theme: {
         primaryColor: '#2D5F4F',
         primaryDark: '#1F4438',
@@ -35,38 +36,19 @@ export async function fetchUserSettings(userId) {
         beige200: '#F5E6D3',
         beige300: '#E8D4BC',
       },
-      background_image: {
-        url: '',
-        opacity: 0.1,
-        fit: 'cover',
-        position: 'center',
-        enabled: false,
-      },
-      hero_image: {
-        url: '',
-        opacity: 0.3,
-        fit: 'cover',
-        position: 'center',
-        enabled: false,
-      },
-      card_image: {
-        url: '',
-        opacity: 0.05,
-        fit: 'cover',
-        position: 'center',
-        enabled: false,
-      },
     };
 
-    const { data: newData, error: insertError } = await supabase
+    // FIX: Use upsert to handle conflicts gracefully
+    const { data: newData, error: upsertError } = await supabase
       .from('user_settings')
-      .insert(defaultSettings)
+      .upsert(defaultSettings, { onConflict: 'user_id' })
       .select()
       .single();
 
-    if (insertError) {
-      console.error('Error creating settings:', insertError);
-      return null;
+    if (upsertError) {
+      console.error('Error creating settings:', upsertError);
+      // Return default settings locally even if DB fails
+      return transformSettingsFromDB(defaultSettings);
     }
 
     return transformSettingsFromDB(newData);
@@ -76,17 +58,22 @@ export async function fetchUserSettings(userId) {
 }
 
 export async function updateUserSettings(userId, settings) {
+  const updateData = {
+    user_id: userId,
+    units: settings.units,
+    name: settings.name,
+    theme: settings.theme || {},
+  };
+
+  // Only include profile_picture if it exists
+  if (settings.profilePicture !== undefined) {
+    updateData.profile_picture = settings.profilePicture;
+  }
+
+  // FIX: Use upsert instead of update to handle missing rows
   const { error } = await supabase
     .from('user_settings')
-    .update({
-      units: settings.units,
-      name: settings.name,
-      theme: settings.theme,
-      background_image: settings.backgroundImage,
-      hero_image: settings.heroImage,
-      card_image: settings.cardImage,
-    })
-    .eq('user_id', userId);
+    .upsert(updateData, { onConflict: 'user_id' });
 
   if (error) {
     console.error('Error updating settings:', error);
@@ -98,10 +85,8 @@ function transformSettingsFromDB(dbSettings) {
   return {
     units: dbSettings.units,
     name: dbSettings.name,
-    theme: dbSettings.theme,
-    backgroundImage: dbSettings.background_image,
-    heroImage: dbSettings.hero_image,
-    cardImage: dbSettings.card_image,
+    profilePicture: dbSettings.profile_picture || null,
+    theme: dbSettings.theme || {},
   };
 }
 
@@ -160,9 +145,9 @@ function transformWeightLogFromDB(dbLog) {
   return {
     id: dbLog.id,
     type: 'weight',
-    weight: parseFloat(dbLog.weight),
+    valueKg: parseFloat(dbLog.weight), // FIX: Changed from 'weight' to 'valueKg' to match app schema
     timestamp: new Date(dbLog.date).toISOString(),
-    notes: dbLog.notes,
+    note: dbLog.notes, // FIX: Changed from 'notes' to 'note' to match app schema
   };
 }
 
@@ -222,9 +207,9 @@ function transformMoodLogFromDB(dbLog) {
   return {
     id: dbLog.id,
     type: 'mood',
-    mood: dbLog.mood,
+    moodScore: dbLog.mood, // FIX: Changed from 'mood' to 'moodScore' to match app schema
     tags: dbLog.tags || [],
-    notes: dbLog.notes,
+    note: dbLog.notes, // FIX: Changed from 'notes' to 'note' to match app schema
     timestamp: new Date(dbLog.date).toISOString(),
   };
 }
@@ -285,7 +270,7 @@ function transformNutritionNoteFromDB(dbNote) {
     id: dbNote.id,
     type: 'nutrition',
     mealType: dbNote.meal_type,
-    notes: dbNote.notes,
+    text: dbNote.notes, // FIX: Changed from 'notes' to 'text' to match app schema
     timestamp: new Date(dbNote.date).toISOString(),
   };
 }
@@ -353,6 +338,54 @@ function transformHealthConnectionFromDB(dbConnection) {
     lastSyncAt: dbConnection.last_sync_at,
     permissions: dbConnection.permissions || [],
   };
+}
+
+// ============================================
+// DELETE ALL USER DATA
+// ============================================
+
+export async function deleteAllUserData(userId) {
+  try {
+    console.log('Deleting all data for user:', userId);
+
+    // Delete all data in parallel
+    const [
+      weightResult,
+      moodResult,
+      nutritionResult,
+      settingsResult,
+      healthResult
+    ] = await Promise.allSettled([
+      supabase.from('weight_logs').delete().eq('user_id', userId),
+      supabase.from('mood_logs').delete().eq('user_id', userId),
+      supabase.from('nutrition_notes').delete().eq('user_id', userId),
+      supabase.from('user_settings').delete().eq('user_id', userId),
+      supabase.from('health_connections').delete().eq('user_id', userId),
+    ]);
+
+    // Log any errors but don't throw (some tables might be empty)
+    if (weightResult.status === 'rejected') {
+      console.error('Error deleting weight logs:', weightResult.reason);
+    }
+    if (moodResult.status === 'rejected') {
+      console.error('Error deleting mood logs:', moodResult.reason);
+    }
+    if (nutritionResult.status === 'rejected') {
+      console.error('Error deleting nutrition notes:', nutritionResult.reason);
+    }
+    if (settingsResult.status === 'rejected') {
+      console.error('Error deleting user settings:', settingsResult.reason);
+    }
+    if (healthResult.status === 'rejected') {
+      console.error('Error deleting health connection:', healthResult.reason);
+    }
+
+    console.log('Successfully deleted all user data from Supabase');
+    return true;
+  } catch (error) {
+    console.error('Error deleting user data from Supabase:', error);
+    throw error;
+  }
 }
 
 // ============================================

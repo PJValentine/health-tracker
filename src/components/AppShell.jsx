@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import BottomTabBar from './BottomTabBar';
 import { formatDate } from '../lib/utils';
 import { RefreshCw, User } from 'lucide-react';
 import { useHealthConnection, useSettings } from '../store/useHealthStore';
 
 export default function AppShell() {
+  const navigate = useNavigate();
   const healthConnection = useHealthConnection();
   const settings = useSettings();
   const isConnected = healthConnection?.status === 'connected';
@@ -59,7 +60,11 @@ export default function AppShell() {
               <RefreshCw size={18} />
             </button>
             {/* Avatar/Settings */}
-            <button className="avatar-button" aria-label="User profile">
+            <button
+              className="avatar-button"
+              aria-label="User profile"
+              onClick={() => navigate('/settings')}
+            >
               <User size={20} />
             </button>
           </div>

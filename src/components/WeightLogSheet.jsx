@@ -18,17 +18,29 @@ export default function WeightLogSheet({ isOpen, onClose }) {
     e.preventDefault();
 
     const weightValue = parseFloat(weight);
+
+    // Enhanced validation
     if (isNaN(weightValue) || weightValue <= 0) {
       toast.error('Please enter a valid weight');
+      return;
+    }
+
+    // Realistic weight bounds (in kg)
+    const valueKg = units === 'lb' ? lbToKg(weightValue) : weightValue;
+    if (valueKg < 20 || valueKg > 500) {
+      toast.error('Weight must be between 20-500 kg (44-1100 lb)');
+      return;
+    }
+
+    // Note length limit
+    if (note.trim().length > 500) {
+      toast.error('Note must be less than 500 characters');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Convert to kg if needed
-      const valueKg = units === 'lb' ? lbToKg(weightValue) : weightValue;
-
       addWeightEntry({
         valueKg,
         note: note.trim(),
@@ -41,8 +53,8 @@ export default function WeightLogSheet({ isOpen, onClose }) {
       setNote('');
       onClose();
     } catch (error) {
-      toast.error('Failed to log weight');
-      console.error(error);
+      toast.error('Failed to log weight. Please try again.');
+      console.error('Weight log error:', error);
     } finally {
       setLoading(false);
     }
@@ -84,7 +96,7 @@ export default function WeightLogSheet({ isOpen, onClose }) {
 
           <div className="form-group">
             <label htmlFor="note" className="form-label">
-              Note (optional)
+              Note (optional) {note.length > 0 && <span className="char-counter">{note.length}/500</span>}
             </label>
             <input
               type="text"
@@ -93,6 +105,7 @@ export default function WeightLogSheet({ isOpen, onClose }) {
               onChange={(e) => setNote(e.target.value)}
               placeholder="e.g., Morning weight after workout"
               className="form-input"
+              maxLength={500}
             />
           </div>
 

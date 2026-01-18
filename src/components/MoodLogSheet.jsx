@@ -28,8 +28,15 @@ export default function MoodLogSheet({ isOpen, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!moodScore) {
-      toast.error('Please select a mood');
+    // Validate mood score
+    if (!moodScore || moodScore < 1 || moodScore > 5) {
+      toast.error('Please select a mood (1-5)');
+      return;
+    }
+
+    // Note length limit
+    if (note.trim().length > 500) {
+      toast.error('Note must be less than 500 characters');
       return;
     }
 
@@ -50,8 +57,8 @@ export default function MoodLogSheet({ isOpen, onClose }) {
       setNote('');
       onClose();
     } catch (error) {
-      toast.error('Failed to log mood');
-      console.error(error);
+      toast.error('Failed to log mood. Please try again.');
+      console.error('Mood log error:', error);
     } finally {
       setLoading(false);
     }
